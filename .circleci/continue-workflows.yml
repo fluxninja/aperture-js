@@ -35,7 +35,7 @@ workflows:
         - equal: [main, << pipeline.git.branch >>]
     jobs:
       - publish-release:
-          name: Verify publish
+          name: verify-publish-release
           context: npmjs
           dry-run: true
 
