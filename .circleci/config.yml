@@ -7,6 +7,8 @@ jobs:
     working_directory: ~/repo
     steps:
       - checkout
+      - asdf_install:
+          cache_name: publish-npm
       - run:
           name: Publish to npmjs
           command: |
@@ -31,3 +33,44 @@ workflows:
               ignore: /.+/
             tags:
               only: /^releases\/.*$/
+
+commands:
+  asdf_install:
+    description: "Install tools using ASDF"
+    parameters:
+      tools:
+        type: string
+        description:
+          "Newline separated list of tools to install. If empty, will install
+          everything."
+        default: ""
+      cache_name:
+        type: string
+        description: "Name of asdf cache"
+        default: "default"
+    steps:
+      - run:
+          name: Install ASDF
+          command: |
+            git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.10.2
+            printf '\nsource "${HOME}/.asdf/asdf.sh"\n' >> "${BASH_ENV}"
+            date +%m > ~/month
+            date +%d > ~/day
+      # We need to restore ASDF cache after installing, otherwise we will try to clone it to non-empty dir
+      - restore_cache:
+          name: Restore ASDF cache
+          keys:
+            - aperture-js-asdf-cache-v11-{{ checksum "~/month" }}-<<
+              parameters.cache_name >>-{{ checksum ".tool-versions" }}-{{
+              checksum "tools/go/go.mod" }}
+            - aperture-js-asdf-cache-v11-{{ checksum "~/month" }}-<<
+              parameters.cache_name >>-
+      - run:
+          name: Copy tool-versions in HOME dir
+          command: |
+            cp .tool-versions ~/.tool-versions
+      - run:
+          name: Install ASDF tools
+          environment:
+            TOOLS: << parameters.tools >>
+          command: .circleci/scripts/asdf_install.sh
