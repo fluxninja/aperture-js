@@ -2,6 +2,11 @@ version: 2.1
 
 jobs:
   publish-release:
+    parameters:
+      dry-run:
+        type: boolean
+        default: false
+        description: Whether to push changes to the npm registry
     docker:
       - image: cimg/base:2022.07
     working_directory: ~/repo
@@ -15,10 +20,38 @@ jobs:
             npm set //registry.npmjs.org/:_authToken=$NPM_TOKEN
             npm config set scope fluxninja --global
             npm ci
-            npm publish --access public
+            args=(--access public)
+            if [[ "<< parameters.dry-run >>" == "true" ]]; then
+               args+=( --dry-run )
+            fi
+            npm publish "${args[@]}"
 
 workflows:
   version: 2
+
+  filter-paths-main:
+    when:
+      and:
+        - equal: [main, << pipeline.git.branch >>]
+        - not:
+            matches:
+              &is_not_empty_tag {
+                value: << pipeline.git.tag >>,
+                pattern: "^.+$",
+              }
+        - not: &scheduled
+            equal: [scheduled_pipeline, << pipeline.trigger_source >>]
+    jobs:
+      - publish-release:
+          name: Verify publish
+          context: npmjs
+          dry-run: true
+          # both this and workflow's when is needed
+          filters:
+            branches:
+              ignore: /.+/
+            tags:
+              only: /^releases\/.*$/
 
   publish-release:
     when:
