@@ -2,10 +2,6 @@ version: 2.1
 
 jobs:
   publish-release:
-    parameters:
-      tag:
-        type: string
-        description: What git tag to use when tagging remote repository
     docker:
       - image: cimg/base:2022.07
     working_directory: ~/repo
