@@ -61,8 +61,7 @@ commands:
           name: Restore ASDF cache
           keys:
             - aperture-js-asdf-cache-v11-{{ checksum "~/month" }}-<<
-              parameters.cache_name >>-{{ checksum ".tool-versions" }}-{{
-              checksum "tools/go/go.mod" }}
+              parameters.cache_name >>-{{ checksum ".tool-versions" }}
             - aperture-js-asdf-cache-v11-{{ checksum "~/month" }}-<<
               parameters.cache_name >>-
       - run:
